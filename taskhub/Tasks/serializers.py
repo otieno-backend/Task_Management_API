@@ -1,40 +1,35 @@
 from rest_framework import serializers
-from .models import Task, Category
 from django.utils import timezone
+
+from .models import Task, Category
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ["id", "name", "created_at"]
-        read_only_fields = ["id", "created_at"]
+        fields = ["id", "name"]
 
 
 class TaskSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
 
-    # full nested category object
     category = CategorySerializer(read_only=True)
 
-    # category id for write operations
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
         source="category",
         write_only=True,
         required=False,
-        allow_null=True
+        allow_null=True,
+        queryset=Category.objects.all()
     )
 
-    # category name (read-only)
     category_name = serializers.CharField(
         source="category.name",
         read_only=True
     )
 
-    # 🔁 NEW: recurrence field
     recurrence = serializers.ChoiceField(
-        choices=Task.Recurrence.choices,
-        default=Task.Recurrence.NONE
+        choices=Task.Recurrence.choices
     )
 
     class Meta:
@@ -46,19 +41,23 @@ class TaskSerializer(serializers.ModelSerializer):
             "due_date",
             "priority",
             "status",
-
-            # category
             "category",
             "category_id",
             "category_name",
-
-            # 🔁 recurrence
             "recurrence",
-
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            self.fields["category_id"].queryset = Category.objects.filter(
+                user=request.user
+            )
 
     def validate_due_date(self, value):
         if value and value < timezone.now():
@@ -66,3 +65,18 @@ class TaskSerializer(serializers.ModelSerializer):
                 "Due date cannot be in the past."
             )
         return value
+
+    # 🔥 SINGLE SOURCE OF TRUTH FOR RULES
+    def update(self, instance, validated_data):
+
+        if instance.status == Task.Status.COMPLETED:
+            allowed = {"title"}
+
+            forbidden = set(validated_data.keys()) - allowed
+
+            if forbidden:
+                raise serializers.ValidationError(
+                    "Only title can be updated for completed tasks."
+                )
+
+        return super().update(instance, validated_data)
