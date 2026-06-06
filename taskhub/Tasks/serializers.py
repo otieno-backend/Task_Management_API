@@ -66,17 +66,18 @@ class TaskSerializer(serializers.ModelSerializer):
             )
         return value
 
-    # 🔥 SINGLE SOURCE OF TRUTH FOR RULES
-    def update(self, instance, validated_data):
+    # ✅ FIXED: proper DRF validation (replaces update override)
+    def validate(self, attrs):
+        instance = getattr(self, "instance", None)
 
-        if instance.status == Task.Status.COMPLETED:
+        if instance and instance.status == Task.Status.COMPLETED:
             allowed = {"title"}
 
-            forbidden = set(validated_data.keys()) - allowed
-
-            if forbidden:
+            if any(field not in allowed for field in attrs.keys()):
                 raise serializers.ValidationError(
                     "Only title can be updated for completed tasks."
                 )
 
-        return super().update(instance, validated_data)
+        return attrs
+    
+    
