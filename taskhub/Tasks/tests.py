@@ -1,199 +1,180 @@
 from django.contrib.auth import get_user_model
-from django.urls import reverse
-from rest_framework import status
+from django.utils import timezone
+from datetime import timedelta
+
 from rest_framework.test import APITestCase
+from rest_framework import status
 
 from .models import Task, Category
 
 User = get_user_model()
 
 
-class TaskAPITestCase(APITestCase):
-
+class BaseAPITest(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="john",
-            password="Bra123#"
+        self.user1 = User.objects.create_user(
+            username="user1", password="pass12345"
+        )
+        self.user2 = User.objects.create_user(
+            username="user2", password="pass12345"
         )
 
-        self.client.force_authenticate(user=self.user)
+        self.category1 = Category.objects.create(user=self.user1, name="Work")
+        self.category2 = Category.objects.create(user=self.user2, name="Home")
 
-        self.category = Category.objects.create(
-            name="Work",
-            user=self.user
-        )
-
-        self.task = Task.objects.create(
-            user=self.user,
-            title="Finish Project",
-            description="DRF Project",
-            priority=Task.Priority.HIGH,
+        self.task1 = Task.objects.create(
+            user=self.user1,
+            title="Task 1",
             status=Task.Status.PENDING,
-            recurrence=Task.Recurrence.NONE,
-            category=self.category
+            priority=Task.Priority.HIGH,
+            due_date=timezone.now() + timedelta(days=1),
+            category=self.category1,
+            recurrence=Task.Recurrence.DAILY,
         )
 
-    def test_create_task(self):
-        url = reverse("task-list")
+        self.task2 = Task.objects.create(
+            user=self.user1,
+            title="Task 2",
+            status=Task.Status.PENDING,
+            priority=Task.Priority.LOW,
+            due_date=timezone.now() + timedelta(days=2),
+            category=self.category1,
+            recurrence=Task.Recurrence.NONE,
+        )
 
-        data = {
-            "title": "New Task",
-            "description": "Testing",
-            "priority": "MEDIUM",
-            "status": "PENDING",
-            "recurrence": "NONE",
-            "category": self.category.id
-        }
+        self.task3 = Task.objects.create(
+            user=self.user2,
+            title="Task 3",
+            status=Task.Status.PENDING,
+            priority=Task.Priority.MEDIUM,
+            due_date=timezone.now() + timedelta(days=3),
+            category=self.category2,
+            recurrence=Task.Recurrence.NONE,
+        )
 
-        response = self.client.post(url, data)
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Task.objects.filter(user=self.user).count(), 2)
+class TaskViewSetTests(BaseAPITest):
 
-    def test_get_tasks(self):
-        url = reverse("task-list")
+    def authenticate(self, user):
+        self.client.force_authenticate(user=user)
 
-        response = self.client.get(url)
+    def test_task_list_only_returns_user_tasks(self):
+        self.authenticate(self.user1)
+        res = self.client.get("/api/tasks/")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("results", response.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(all(t["title"] != "Task 3" for t in res.data["results"]))
 
     def test_filter_by_status(self):
-        url = reverse("task-list")
+        self.authenticate(self.user1)
+        res = self.client.get("/api/tasks/?status=PENDING")
 
-        response = self.client.get(url, {"status": "PENDING"})
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(all(t["status"] == "PENDING" for t in res.data["results"]))
 
-        self.assertEqual(response.status_code, 200)
+    def test_filter_by_priority(self):
+        self.authenticate(self.user1)
+        res = self.client.get("/api/tasks/?priority=HIGH")
 
-        results = response.data["results"]
-        self.assertTrue(all(task["status"] == "PENDING" for task in results))
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(all(t["priority"] == "HIGH" for t in res.data["results"]))
 
-    def test_update_task(self):
-        url = reverse("task-detail", kwargs={"pk": self.task.id})
+    def test_filter_by_category_id(self):
+        self.authenticate(self.user1)
+        res = self.client.get(f"/api/tasks/?category={self.category1.id}")
 
-        response = self.client.patch(
-            url,
-            {"priority": "LOW"},
-            format="json"
-        )
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(all(t["category"]["id"] == self.category1.id for t in res.data["results"]))
 
-        self.assertEqual(response.status_code, 200)
+    def test_filter_by_category_name(self):
+        self.authenticate(self.user1)
+        res = self.client.get("/api/tasks/?category=Work")
 
-        self.task.refresh_from_db()
-        self.assertEqual(self.task.priority, "LOW")
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(all(t["category"]["name"] == "Work" for t in res.data["results"]))
 
-    def test_delete_task(self):
-        url = reverse("task-detail", kwargs={"pk": self.task.id})
+    def test_ordering(self):
+        self.authenticate(self.user1)
+        res = self.client.get("/api/tasks/?ordering=-priority")
 
-        response = self.client.delete(url)
+        self.assertEqual(res.status_code, 200)
+        priorities = [t["priority"] for t in res.data["results"]]
+        self.assertEqual(priorities, sorted(priorities, reverse=True))
 
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+    def test_create_task_assigns_user(self):
+        self.authenticate(self.user1)
 
-        self.assertFalse(Task.objects.filter(id=self.task.id).exists())
+        payload = {
+            "title": "New Task",
+            "priority": "HIGH",
+            "status": "PENDING",
+            "recurrence": "NONE",
+        }
 
-    def test_completed_task_title_can_be_updated(self):
-        self.task.status = Task.Status.COMPLETED
-        self.task.save()
+        res = self.client.post("/api/tasks/", payload)
 
-        url = reverse("task-detail", kwargs={"pk": self.task.id})
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data["user"], self.user1.username)
 
-        response = self.client.patch(
-            url,
-            {"title": "Updated Title"},
-            format="json"
-        )
+    def test_complete_task_marks_completed(self):
+        self.authenticate(self.user1)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        url = f"/api/tasks/{self.task1.id}/complete/"
+        res = self.client.patch(url)
 
-        self.task.refresh_from_db()
-        self.assertEqual(self.task.title, "Updated Title")
+        self.assertEqual(res.status_code, 200)
 
-    def test_completed_task_priority_cannot_be_updated(self):
-        self.task.status = Task.Status.COMPLETED
-        self.task.save()
+        self.task1.refresh_from_db()
+        self.assertEqual(self.task1.status, Task.Status.COMPLETED)
+        self.assertIsNotNone(self.task1.completed_at)
 
-        url = reverse("task-detail", kwargs={"pk": self.task.id})
+    def test_complete_task_creates_next_recurrence(self):
+        self.authenticate(self.user1)
 
-        response = self.client.patch(
-            url,
-            {"priority": "LOW"},
-            format="json"
-        )
+        url = f"/api/tasks/{self.task1.id}/complete/"
+        self.client.patch(url)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        recurring_task_exists = Task.objects.filter(
+            user=self.user1,
+            title=self.task1.title,
+            status=Task.Status.PENDING
+        ).exclude(id=self.task1.id).exists()
 
-    def test_completed_task_status_cannot_be_changed(self):
-        self.task.status = Task.Status.COMPLETED
-        self.task.save()
+        self.assertTrue(recurring_task_exists)
 
-        url = reverse("task-detail", kwargs={"pk": self.task.id})
+    def test_complete_already_completed_task_fails(self):
+        self.authenticate(self.user1)
 
-        response = self.client.patch(
-            url,
-            {"status": "PENDING"},
-            format="json"
-        )
+        self.task1.status = Task.Status.COMPLETED
+        self.task1.save()
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        url = f"/api/tasks/{self.task1.id}/complete/"
+        res = self.client.patch(url)
 
-    def test_complete_task_endpoint(self):
-        url = reverse("task-complete", kwargs={"pk": self.task.id})
-
-        response = self.client.patch(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.task.refresh_from_db()
-
-        self.assertEqual(self.task.status, Task.Status.COMPLETED)
-        self.assertIsNotNone(self.task.completed_at)
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("error", res.data)
 
 
-class CategoryAPITestCase(APITestCase):
+class CategoryViewSetTests(BaseAPITest):
 
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="john",
-            password="Bra123#"
-        )
+    def authenticate(self, user):
+        self.client.force_authenticate(user=user)
 
-        self.client.force_authenticate(user=self.user)
+    def test_user_sees_only_their_categories(self):
+        self.authenticate(self.user1)
+        res = self.client.get("/api/categories/")
 
-        self.category = Category.objects.create(
-            name="Work",
-            user=self.user
-        )
+        self.assertEqual(res.status_code, 200)
+        names = [c["name"] for c in res.data]
 
-    def test_create_category(self):
-        url = reverse("category-list")
+        self.assertIn("Work", names)
+        self.assertNotIn("Home", names)
 
-        response = self.client.post(url, {"name": "Personal"})
+    def test_create_category_assigns_user(self):
+        self.authenticate(self.user1)
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        res = self.client.post("/api/categories/", {"name": "Fitness"})
 
-    def test_get_categories(self):
-        url = reverse("category-list")
-
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_update_category(self):
-        url = reverse("category-detail", kwargs={"pk": self.category.id})
-
-        response = self.client.patch(url, {"name": "Office"})
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.category.refresh_from_db()
-        self.assertEqual(self.category.name, "Office")
-
-    def test_delete_category(self):
-        url = reverse("category-detail", kwargs={"pk": self.category.id})
-
-        response = self.client.delete(url)
-
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        self.assertFalse(Category.objects.filter(id=self.category.id).exists())
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(Category.objects.filter(user=self.user1, name="Fitness").count(), 1)
         

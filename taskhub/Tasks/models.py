@@ -12,7 +12,6 @@ class Task(models.Model):
         PENDING = "PENDING", "Pending"
         COMPLETED = "COMPLETED", "Completed"
 
-    # 🔁 Recurrence added
     class Recurrence(models.TextChoices):
         NONE = "NONE", "None"
         DAILY = "DAILY", "Daily"
@@ -42,7 +41,6 @@ class Task(models.Model):
         default=Status.PENDING
     )
 
-    # 🔁 NEW FIELD: recurrence rule
     recurrence = models.CharField(
         max_length=10,
         choices=Recurrence.choices,
@@ -73,8 +71,7 @@ class Category(models.Model):
 
     name = models.CharField(max_length=100)
 
-    #created_at = models.DateTimeField(auto_now_add=True)
-
     def __str__(self):
         return self.name
+    
     

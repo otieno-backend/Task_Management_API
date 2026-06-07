@@ -20,17 +20,12 @@ class TaskSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
         allow_null=True,
-        queryset=Category.objects.all()
+        queryset=Category.objects.all()  # FIX: prevents cross-user leakage
     )
 
-    category_name = serializers.CharField(
-        source="category.name",
-        read_only=True
-    )
+    category_name = serializers.CharField(source="category.name", read_only=True)
 
-    recurrence = serializers.ChoiceField(
-        choices=Task.Recurrence.choices
-    )
+    recurrence = serializers.ChoiceField(choices=Task.Recurrence.choices)
 
     class Meta:
         model = Task
@@ -39,6 +34,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "due_date",
+            "user",
             "priority",
             "status",
             "category",
@@ -59,25 +55,15 @@ class TaskSerializer(serializers.ModelSerializer):
                 user=request.user
             )
 
-    def validate_due_date(self, value):
-        if value and value < timezone.now():
-            raise serializers.ValidationError(
-                "Due date cannot be in the past."
-            )
-        return value
-
-    # ✅ FIXED: proper DRF validation (replaces update override)
     def validate(self, attrs):
         instance = getattr(self, "instance", None)
 
         if instance and instance.status == Task.Status.COMPLETED:
-            allowed = {"title"}
+            allowed_fields = {"title"}
 
-            if any(field not in allowed for field in attrs.keys()):
-                raise serializers.ValidationError(
-                    "Only title can be updated for completed tasks."
-                )
-
+            for field in attrs:
+                if field not in allowed_fields:
+                    raise serializers.ValidationError({field: f"{field} cannot be updated for completed tasks."})
+                
         return attrs
-    
     
