@@ -47,7 +47,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         if ordering in ALLOWED_ORDERING:
             queryset = queryset.order_by(ordering)
         else:
-            queryset = queryset.order_by("-created_at")  # default ordering
+            queryset = queryset.order_by("-created_at")  
 
         return queryset
 

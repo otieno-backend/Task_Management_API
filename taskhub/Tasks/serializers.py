@@ -20,7 +20,7 @@ class TaskSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
         allow_null=True,
-        queryset=Category.objects.all()  # FIX: prevents cross-user leakage
+        queryset=Category.objects.all()  
     )
 
     category_name = serializers.CharField(source="category.name", read_only=True)
