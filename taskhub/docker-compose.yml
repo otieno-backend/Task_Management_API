@@ -12,13 +12,28 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   web:
     build: .
-    command: sh -c "python manage.py migrate && gunicorn taskhub.wsgi:application --bind 0.0.0.0:8000"
+    env_file:
+      - .env
+    command: >
+      sh -c "
+      python manage.py migrate --noinput &&
+      gunicorn taskhub.wsgi:application
+      --bind 0.0.0.0:8000
+      --timeout 120
+      "
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
-        
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:
+

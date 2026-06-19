@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,9 +28,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-key")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = [
-    ".onrender.com",
     "localhost",
     "127.0.0.1",
+    ".onrender.com"
 ]
 
 
@@ -84,26 +85,14 @@ WSGI_APPLICATION = 'taskhub.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 USE_POSTGRES = os.getenv("USE_POSTGRES", "false").lower() in ["true", "1", "yes"]
+import dj_database_url
 
-if USE_POSTGRES:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("DB_NAME"),
-            "USER": os.getenv("DB_USER"),
-            "PASSWORD": os.getenv("DB_PASSWORD"),
-            "HOST": os.getenv("DB_HOST"),
-            "PORT": os.getenv("DB_PORT", "5432"),
-        }
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
-# Password validation
+DATABASES = {
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    )
+}
+
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -170,7 +159,6 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 SECURE_SSL_REDIRECT = not DEBUG
-
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
@@ -179,6 +167,9 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-CSRF_TRUSTED_ORIGINS =['https://*.onrender.com']
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+    "http://localhost:8000"
+]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https",)
