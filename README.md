@@ -1,76 +1,86 @@
-# Task Management API
+# 📌 Task Management API
 
-The API enables users to manage tasks, organize them into categories, track completion status, and automate recurring tasks.
-
-## 🚀 Live API
-
-https://task-management-api-wpw5.onrender.com
-
-## 📂 GitHub Repository
-
-https://github.com/otieno-backend/Task_Management_API
+A scalable RESTful API for managing tasks, categories, and recurring workflows with authentication, filtering, role-based access control, and full Docker support.
 
 ---
 
-# Features
+## 🚀 Live API
 
-## Authentication
+👉 [https://task-management-api-wpw5.onrender.com](https://task-management-api-wpw5.onrender.com)
+
+---
+
+## 📂 Repository
+
+👉 [https://github.com/otieno-backend/Task_Management_API](https://github.com/otieno-backend/Task_Management_API)
+
+---
+
+# ✨ Features
+
+## 🔐 Authentication
 
 * User Registration
-* User Login
-* User Logout
-* Token-Based Authentication
+* Login / Logout
+* Token-Based Authentication (DRF Token Auth)
 * Protected Endpoints
 
-## User Roles
+---
+
+## 👥 User Roles
 
 * Admin Dashboard Access
 * Regular User Dashboard Access
-* Custom Role-Based Permissions
+* Role-Based Permissions
 
-## Task Management
+---
 
-* Create Tasks
-* View Tasks
-* Update Tasks
-* Delete Tasks
+## 📝 Task Management
+
+* Create, Read, Update, Delete Tasks
 * Mark Tasks as Complete
 * Task Categories
-* Task Priorities
+* Priority Levels
 * Due Dates
-* Task Status Tracking
+* Status Tracking
 
-## Recurring Tasks
+---
 
-Supports:
+## 🔁 Recurring Tasks
 
-* Daily Recurrence
-* Weekly Recurrence
-* Monthly Recurrence
+Supports automatic task regeneration for:
 
-When a recurring task is marked as completed, the next occurrence is automatically generated.
+* Daily recurrence
+* Weekly recurrence
+* Monthly recurrence
 
-## Filtering & Sorting
+✔ Completed recurring tasks automatically generate the next instance.
 
-Filter tasks by:
+---
+
+## 🔍 Filtering & Sorting
+
+### Filters
 
 * Status
 * Priority
 * Due Date
-* Category
+* Category (by name or ID)
 
-Sort tasks by:
+### Sorting
 
-* Due Date (Ascending/Descending)
-* Priority (Ascending/Descending)
-
-## Pagination
-
-Task results are paginated for improved performance and scalability.
+* Due date (ascending/descending)
+* Priority (ascending/descending)
 
 ---
 
-# Technology Stack
+## 📄 Pagination
+
+Efficient paginated responses for scalable performance.
+
+---
+
+# 🛠 Tech Stack
 
 ## Backend
 
@@ -84,401 +94,210 @@ Task results are paginated for improved performance and scalability.
 
 ## Database
 
-* SQLite (Development)
-* PostgreSQL (Production Ready)
+* SQLite (development)
+* PostgreSQL (production-ready)
 
-# Base URL
+## DevOps
 
-## Local Development
+* Docker
+* Docker Compose
+* Gunicorn
 
-```text
-http://127.0.0.1:8000/api/
+---
+
+# 🌐 API Base URL
+
+## Local (Docker)
+
+```text id="k7q1lz"
+http://localhost:8000/api/
 ```
 
 ## Production
 
-```text
+```text id="x1v9wp"
 https://task-management-api-wpw5.onrender.com/api/
 ```
 
 ---
 
-# Authentication Endpoints
+# 🐳 Docker Deployment
 
-## Register User
+This project is fully containerized using Docker and Docker Compose.
 
-### POST
+## 📦 Prerequisites
 
-```http
-/api/register/
-```
+* Docker
+* Docker Compose
 
-### Request Body
+---
 
-```json
-{
-  "username": "john",
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
+## 🚀 Run the Project
 
-### Response
+### 1. Clone repository
 
-```json
-{
-  "message": "User created successfully",
-  "token": "your-token",
-  "user": {
-    "id": 1,
-    "username": "john",
-    "email": "john@example.com"
-  }
-}
+```bash id="g3nq9a"
+git clone https://github.com/otieno-backend/Task_Management_API.git
+cd Task_Management_API
 ```
 
 ---
 
-## Login
+### 2. Build and start containers
 
-### POST
-
-```http
-/api/login/
-```
-
-### Request
-
-```json
-{
-  "username": "john",
-  "password": "password123"
-}
+```bash id="p8m2ld"
+docker compose up --build
 ```
 
 ---
 
-## Logout
+### 3. Run in background
 
-### POST
-
-```http
-/api/logout/
-```
-
-Authentication Required
-
----
-
-# Dashboard Endpoints
-
-## Admin Dashboard
-
-### GET
-
-```http
-/api/admin/dashboard/
-```
-
-Requires:
-
-* Authenticated User
-* Admin Role
-
----
-
-## User Dashboard
-
-### GET
-
-```http
-/api/user/dashboard/
-```
-
-Requires:
-
-* Authenticated User
-* Regular User Role
-
----
-
-# Task Endpoints
-
-## Get All Tasks
-
-### GET
-
-```http
-/api/tasks/
+```bash id="w7k3vd"
+docker compose up -d
 ```
 
 ---
 
-## Create Task
+### 4. Apply migrations
 
-### POST
-
-```http
-/api/tasks/
-```
-
-Example:
-
-```json
-{
-  "title": "Finish API Project",
-  "description": "Complete backend implementation",
-  "priority": "HIGH",
-  "due_date": "2026-06-15T12:00:00Z",
-  "recurrence": "DAILY"
-}
+```bash id="n4x8qp"
+docker compose exec web python manage.py migrate
 ```
 
 ---
 
-## Retrieve Single Task
+### 5. Create superuser
 
-### GET
-
-```http
-/api/tasks/{id}/
+```bash id="t6m1ax"
+docker compose exec web python manage.py createsuperuser
 ```
 
 ---
 
-## Update Task
+## 🌍 Access API
 
-### PUT
-
-```http
-/api/tasks/{id}/
-```
-
-or
-
-### PATCH
-
-```http
-/api/tasks/{id}/
+```text id="c9v2ld"
+http://localhost:8000/api/
 ```
 
 ---
 
-## Delete Task
+## 🧱 Docker Services
 
-### DELETE
+### 🟦 Web (Django + Gunicorn)
 
-```http
-/api/tasks/{id}/
+* Runs Django API
+* Exposed on port 8000
+
+### 🟩 Database (PostgreSQL 16)
+
+* Persistent volume enabled
+* Automatically initialized
+
+---
+
+## ⚙️ Environment Variables
+
+Create `.env` file:
+
+```env id="d8k2qp"
+DEBUG=1
+SECRET_KEY=your-secret-key
+
+POSTGRES_DB=taskhub
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
 ```
 
 ---
 
-## Complete Task
+## 📄 Docker Compose Overview
 
-### PATCH
+```yaml id="m2v9qp"
+services:
+  web:
+    build: .
+    command: gunicorn taskhub.wsgi:application --bind 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env
 
-```http
-/api/tasks/{id}/complete/
-```
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: taskhub
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-Behavior:
-
-* Marks task as completed.
-* Records completion timestamp.
-* Automatically creates the next task if recurrence is enabled.
-
----
-
-# Task Filters
-
-## Status
-
-```http
-/api/tasks/?status=PENDING
-```
-
-## Priority
-
-```http
-/api/tasks/?priority=HIGH
-```
-
-## Due Date
-
-```http
-/api/tasks/?due_date=2026-06-15
-```
-
-## Category Name
-
-```http
-/api/tasks/?category=Work
-```
-
-## Category ID
-
-```http
-/api/tasks/?category=1
+volumes:
+  postgres_data:
 ```
 
 ---
 
-# Task Ordering
+# 🔐 Authentication Header
 
-## Due Date Ascending
-
-```http
-/api/tasks/?ordering=due_date
-```
-
-## Due Date Descending
-
-```http
-/api/tasks/?ordering=-due_date
-```
-
-## Priority Ascending
-
-```http
-/api/tasks/?ordering=priority
-```
-
-## Priority Descending
-
-```http
-/api/tasks/?ordering=-priority
-```
-
----
-
-# Category Endpoints
-
-## Get Categories
-
-### GET
-
-```http
-/api/categories/
-```
-
----
-
-## Create Category
-
-### POST
-
-```http
-/api/categories/
-```
-
----
-
-## Retrieve Category
-
-### GET
-
-```http
-/api/categories/{id}/
-```
-
----
-
-## Update Category
-
-### PUT/PATCH
-
-```http
-/api/categories/{id}/
-```
-
----
-
-## Delete Category
-
-### DELETE
-
-```http
-/api/categories/{id}/
-```
-
----
-
-# Authentication Header
-
-Include your token in every protected request:
-
-```http
+```http id="v4x9ld"
 Authorization: Token your_token_here
 ```
 
-Example:
-
-```http
-Authorization: Token 123abc456def789
-```
-
 ---
 
-# Project Structure
+# 📌 Project Structure
 
-```text
+```text id="b8m1qp"
 Task_Management_API/
 
 ├── accounts/
-│   ├── views.py
-│   ├── serializers.py
-│   ├── permissions.py
-│   └── urls.py
-│
 ├── Tasks/
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   ├── pagination.py
-│   └── urls.py
-│
 ├── project/
-│   ├── settings.py
-│   └── urls.py
-│
 ├── manage.py
 ├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
 └── README.md
 ```
 
 ---
 
-# Security
+# 🔐 Security
 
 * Token Authentication
-* User-Specific Task Access
-* Role-Based Permissions
+* Role-Based Access Control
+* User-Isolated Data Access
 * Protected API Endpoints
 
 ---
 
-# Future Improvements
+# 🚀 Future Improvements
 
 * JWT Authentication
 * Email Notifications
 * Task Reminders
-* Search Functionality
+* Full-Text Search
 * Team Collaboration
-* Task Attachments
-* Swagger/OpenAPI Documentation
+* File Attachments
+* Swagger / OpenAPI Documentation
+* CI/CD with GitHub Actions
 
 ---
 
-# Author
+# 👨‍💻 Author
 
-Otieno Backend
+**Otieno Backend**
 
-GitHub:
-https://github.com/otieno-backend
+GitHub: [https://github.com/otieno-backend](https://github.com/otieno-backend)
 
 ---
 
-# License
+# 📜 License
 
-This project is licensed under the MIT License.
+MIT License
