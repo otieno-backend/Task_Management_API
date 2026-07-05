@@ -1,208 +1,249 @@
-# 📌 Task Management API
+# 🚀 Task Management API
 
-A scalable RESTful API for managing tasks, categories, and recurring workflows with authentication, filtering, role-based access control, and full Docker support.
-
----
-
-## 🚀 Live API
-
-👉 [https://task-management-api-wpw5.onrender.com](https://task-management-api-wpw5.onrender.com)
+A production-ready **Task Management REST API** built with **Django** and **Django REST Framework**.
+It enables secure, scalable task management with authentication, role-based access control, recurring task automation, and background processing using Celery.
 
 ---
 
-## 📂 Repository
+## 🌐 Live Demo
 
-👉 [https://github.com/otieno-backend/Task_Management_API](https://github.com/otieno-backend/Task_Management_API)
-
----
-
-# ✨ Features
-
-## 🔐 Authentication
-
-* User Registration
-* Login / Logout
-* Token-Based Authentication (DRF Token Auth)
-* Protected Endpoints
+* 🔗 API: [Task Management API](https://task-management-api-wpw5.onrender.com/?utm_source=chatgpt.com)
+* 💻 Repository: [GitHub Repository](https://github.com/otieno-backend/Task_Management_API?utm_source=chatgpt.com) (hosted on GitHub)
 
 ---
 
-## 👥 User Roles
+## ✨ Key Features
 
-* Admin Dashboard Access
-* Regular User Dashboard Access
-* Role-Based Permissions
+### 🔐 Authentication & Security
 
----
-
-## 📝 Task Management
-
-* Create, Read, Update, Delete Tasks
-* Mark Tasks as Complete
-* Task Categories
-* Priority Levels
-* Due Dates
-* Status Tracking
+* Token-based authentication (DRF Token Auth)
+* User registration & login
+* Protected endpoints
+* User data isolation
+* Production-ready security settings (HSTS, secure cookies, clickjacking protection)
 
 ---
 
-## 🔁 Recurring Tasks
+### 👥 Role-Based Access Control
 
-Supports automatic task regeneration for:
-
-* Daily recurrence
-* Weekly recurrence
-* Monthly recurrence
-
-✔ Completed recurring tasks automatically generate the next instance.
+* Admin vs regular user permissions
+* Users can only access their own tasks
+* Secure object-level access control
 
 ---
 
-## 🔍 Filtering & Sorting
+### ✅ Task Management
 
-### Filters
+Users can:
 
-* Status
-* Priority
-* Due Date
-* Category (by name or ID)
-
-### Sorting
-
-* Due date (ascending/descending)
-* Priority (ascending/descending)
+* Create, update, delete tasks
+* Mark tasks as completed
+* Assign priorities (Low / Medium / High)
+* Organize tasks using categories
+* Set due dates
+* Track task status
 
 ---
 
-## 📄 Pagination
+### 🔁 Recurring Tasks (Celery-powered)
 
-Efficient paginated responses for scalable performance.
+Automated task regeneration using **Celery + Redis + django-celery-beat**:
 
----
-
-# 🛠 Tech Stack
-
-## Backend
-
-* Python
-* Django
-* Django REST Framework
-
-## Authentication
-
-* DRF Token Authentication
-
-## Database
-
-* SQLite (development)
-* PostgreSQL (production-ready)
-
-## DevOps
-
-* Docker
-* Docker Compose
-* Gunicorn
+* Daily tasks
+* Weekly tasks
+* Monthly tasks
+* Automatic next-task generation after completion
 
 ---
 
-# 🌐 API Base URL
+### 🔎 Filtering, Sorting & Pagination
 
-## Local (Docker)
+* Filter by status, priority, category, due date
+* Sort by due date or priority
+* Paginated API responses for scalability
 
-```text id="k7q1lz"
+---
+
+## 🧱 Tech Stack
+
+| Layer        | Technology               |
+| ------------ | ------------------------ |
+| Backend      | Django 4.2               |
+| API          | Django REST Framework    |
+| Database     | PostgreSQL / SQLite      |
+| Async Tasks  | Celery                   |
+| Broker       | Redis                    |
+| Scheduler    | django-celery-beat       |
+| Auth         | DRF Token Authentication |
+| Server       | Gunicorn                 |
+| Static Files | WhiteNoise               |
+| Deployment   | Docker, Render           |
+
+---
+
+## 🏗️ System Architecture
+
+```
+Client → Django REST API → PostgreSQL
+                     ↓
+                Redis Broker
+                     ↓
+              Celery Workers
+                     ↓
+        Recurring Task Scheduler
+```
+
+---
+
+## 📦 Project Structure
+
+```
+Task_Management_API/
+│
+├── accounts/          # Authentication & permissions
+├── Tasks/             # Core task management logic
+├── taskhub/           # Project configuration
+│
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── manage.py
+```
+
+---
+
+## 🔗 API Base URL
+
+### Local
+
+```
 http://localhost:8000/api/
 ```
 
-## Production
+### Production
 
-```text id="x1v9wp"
+```
 https://task-management-api-wpw5.onrender.com/api/
 ```
 
 ---
 
-# 🐳 Docker Deployment
+## 🔑 Authentication Flow
 
-This project is fully containerized using Docker and Docker Compose.
+### 1. Register User
 
-## 📦 Prerequisites
+```http
+POST /api/register/
+```
 
-* Docker
-* Docker Compose
+### 2. Login
+
+```http
+POST /api/login/
+```
+
+Response:
+
+```json
+{
+  "token": "your_auth_token"
+}
+```
+
+### 3. Use Token
+
+```http
+Authorization: Token your_auth_token
+```
 
 ---
 
-## 🚀 Run the Project
+## 📌 Core API Endpoints
 
-### 1. Clone repository
+| Method | Endpoint       | Description       |
+| ------ | -------------- | ----------------- |
+| POST   | `/register/`   | Create user       |
+| POST   | `/login/`      | Authenticate user |
+| GET    | `/tasks/`      | List tasks        |
+| POST   | `/tasks/`      | Create task       |
+| GET    | `/tasks/{id}/` | Retrieve task     |
+| PUT    | `/tasks/{id}/` | Update task       |
+| DELETE | `/tasks/{id}/` | Delete task       |
+| GET    | `/categories/` | List categories   |
 
-```bash id="g3nq9a"
+---
+
+## 📤 Example Request
+
+```http
+POST /api/tasks/
+Authorization: Token your_token
+```
+
+```json
+{
+  "title": "Complete Django Project",
+  "description": "Finish Task Management API",
+  "priority": "High",
+  "status": "Pending",
+  "due_date": "2026-07-15"
+}
+```
+
+---
+
+## 🔍 Filtering Examples
+
+```http
+GET /api/tasks/?status=Pending
+GET /api/tasks/?priority=High
+GET /api/tasks/?ordering=due_date
+GET /api/tasks/?page=2
+```
+
+---
+
+## 🐳 Docker Setup
+
+### Clone Repository
+
+```bash
 git clone https://github.com/otieno-backend/Task_Management_API.git
 cd Task_Management_API
 ```
 
----
+### Run Containers
 
-### 2. Build and start containers
-
-```bash id="p8m2ld"
+```bash
 docker compose up --build
 ```
 
----
+### Run in Background
 
-### 3. Run in background
-
-```bash id="w7k3vd"
+```bash
 docker compose up -d
 ```
 
----
+### Migrate Database
 
-### 4. Apply migrations
-
-```bash id="n4x8qp"
+```bash
 docker compose exec web python manage.py migrate
 ```
 
----
+### Create Superuser
 
-### 5. Create superuser
-
-```bash id="t6m1ax"
+```bash
 docker compose exec web python manage.py createsuperuser
 ```
 
 ---
 
-## 🌍 Access API
-
-```text id="c9v2ld"
-http://localhost:8000/api/
-```
-
----
-
-## 🧱 Docker Services
-
-### 🟦 Web (Django + Gunicorn)
-
-* Runs Django API
-* Exposed on port 8000
-
-### 🟩 Database (PostgreSQL 16)
-
-* Persistent volume enabled
-* Automatically initialized
-
----
-
 ## ⚙️ Environment Variables
 
-Create `.env` file:
+Create a `.env` file:
 
-```env id="d8k2qp"
-DEBUG=1
+```env
+DEBUG=True
 SECRET_KEY=your-secret-key
 
 POSTGRES_DB=taskhub
@@ -210,94 +251,77 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
+
+CELERY_BROKER_URL=redis://redis:6379/0
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
 ```
 
 ---
 
-## 📄 Docker Compose Overview
+## 🔄 Background Jobs
 
-```yaml id="m2v9qp"
-services:
-  web:
-    build: .
-    command: gunicorn taskhub.wsgi:application --bind 0.0.0.0:8000
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    env_file:
-      - .env
+Powered by **Celery + Redis**:
 
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: taskhub
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+* Recurring task generation
+* Scheduled task execution
+* Periodic job scheduling via django-celery-beat
 
-volumes:
-  postgres_data:
+---
+
+## 🧪 Testing
+
+Run automated tests:
+
+```bash
+pytest
+```
+
+Optional coverage:
+
+```bash
+coverage run -m pytest
+coverage report
 ```
 
 ---
 
-# 🔐 Authentication Header
+## 🧠 Design Decisions
 
-```http id="v4x9ld"
-Authorization: Token your_token_here
-```
-
----
-
-# 📌 Project Structure
-
-```text id="b8m1qp"
-Task_Management_API/
-
-├── accounts/
-├── Tasks/
-├── project/
-├── manage.py
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
+* **Token Auth** → simple, stateless authentication for API-first design
+* **Celery** → reliable background task execution for recurring tasks
+* **PostgreSQL** → production-grade relational database
+* **Docker** → consistent development and deployment environment
 
 ---
 
-# 🔐 Security
+## 📈 Future Improvements
 
-* Token Authentication
-* Role-Based Access Control
-* User-Isolated Data Access
-* Protected API Endpoints
-
----
-
-# 🚀 Future Improvements
-
-* JWT Authentication
-* Email Notifications
-* Task Reminders
-* Full-Text Search
-* Team Collaboration
-* File Attachments
-* Swagger / OpenAPI Documentation
-* CI/CD with GitHub Actions
+* JWT authentication upgrade
+* Email & push notifications for due tasks
+* WebSocket real-time updates
+* Advanced analytics dashboard
+* Rate limiting & API throttling
+* Task sharing between users
 
 ---
 
-# 👨‍💻 Author
+## 🚀 Deployment
+
+Production stack:
+
+* Render (hosting)
+* Gunicorn (WSGI server)
+* WhiteNoise (static files)
+* PostgreSQL (database)
+* Redis (message broker)
+* Docker (containerization)
+
+---
+
+## 👨‍💻 Author
 
 **Otieno Backend**
 
-GitHub: [https://github.com/otieno-backend](https://github.com/otieno-backend)
+* GitHub: [GitHub Profile](https://github.com/otieno-backend?utm_source=chatgpt.com)
 
----
-
-# 📜 License
-
-MIT License
