@@ -177,9 +177,10 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https",)
 
 
 
-CELERY_BROKER_URL = os.getenv(
-    "REDIS_URL",
-    "redis://redis:6379/0"
+CELERY_BROKER_URL = (
+    os.getenv("CELERY_BROKER_URL")
+    or os.getenv("REDIS_URL")
+    or "redis://redis:6379/0"
 )
 
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
@@ -202,5 +203,3 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-

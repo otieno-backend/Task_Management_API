@@ -10,4 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# IMPORTANT: do NOT hardcode CMD here
+
 EXPOSE 8000
