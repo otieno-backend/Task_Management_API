@@ -2,6 +2,12 @@
 
 A RESTful Task Management API built with Django REST Framework. The project provides secure task management, user authentication, role-based permissions, filtering, pagination, and support for recurring tasks using background jobs.
 
+## 🌐 Live Demo
+
+Live API: https://task-management-api-wpw5.onrender.com/api/
+
+The API is deployed on Render and available for testing.
+
 ## 🚀 Features
 
 User registration and authentication
@@ -51,19 +57,19 @@ Render
 ## 🏗️ Project Structure
 
 Task_Management_API/
-|
+
 ├── accounts/       # User authentication and permissions
-|
+
 ├── Tasks/          # Task management functionality
-|
+
 ├── taskhub/        # Django project configuration
-|
+
 ├── Dockerfile
-|
+
 ├── docker-compose.yml
-|
+
 ├── requirements.txt
-|
+
 └── manage.py
 
 ## ⚙️ Getting Started
