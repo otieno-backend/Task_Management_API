@@ -125,12 +125,6 @@ The project can also be run using Docker:
 
 docker compose up --build
 
-### 🌐 Live API
-
-The API is deployed on Render:
-
-https://task-management-api-wpw5.onrender.com/api/
-
 ### 📌 What I Built
 
 This project demonstrates my ability to:
