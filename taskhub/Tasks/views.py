@@ -40,28 +40,48 @@ class TaskViewSet(viewsets.ModelViewSet):
             else:
                 queryset = queryset.filter(category__name__iexact=category)
 
-        ALLOWED_ORDERING = {"due_date", "-due_date", "priority", "-priority"}
+        ALLOWED_ORDERING = {
+            "due_date",
+            "-due_date",
+            "priority",
+            "-priority",
+        }
 
         ordering = self.request.query_params.get("ordering")
 
         if ordering in ALLOWED_ORDERING:
             queryset = queryset.order_by(ordering)
         else:
-            queryset = queryset.order_by("-created_at")  
+            queryset = queryset.order_by("-created_at")
 
         return queryset
 
     def get_serializer_context(self):
         return {"request": self.request}
-    
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+    def perform_update(self, serializer):
+        task = self.get_object()
+        old_status = task.status
+
+        task = serializer.save()
+
+        if task.status == Task.Status.COMPLETED:
+            if old_status != Task.Status.COMPLETED:
+                task.completed_at = timezone.now()
+                task.save(update_fields=["completed_at"])
+
+        else:
+            if old_status == Task.Status.COMPLETED:
+                task.completed_at = None
+                task.save(update_fields=["completed_at"])
+
     def get_next_due_date(self, task):
-        
         if not task.due_date:
             return None
-        
+
         if task.recurrence == Task.Recurrence.DAILY:
             return task.due_date + timedelta(days=1)
 
@@ -113,5 +133,3 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-        

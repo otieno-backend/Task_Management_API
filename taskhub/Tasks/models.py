@@ -10,7 +10,9 @@ class Task(models.Model):
 
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
         COMPLETED = "COMPLETED", "Completed"
+        CANCELLED = "CANCELLED", "Cancelled"
 
     class Recurrence(models.TextChoices):
         NONE = "NONE", "None"
@@ -36,7 +38,7 @@ class Task(models.Model):
     )
 
     status = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=Status.choices,
         default=Status.PENDING
     )

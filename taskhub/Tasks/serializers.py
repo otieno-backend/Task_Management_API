@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.utils import timezone
 
 from .models import Task, Category
 
@@ -20,7 +19,7 @@ class TaskSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
         allow_null=True,
-        queryset=Category.objects.all()  
+        queryset=Category.objects.all()
     )
 
     category_name = serializers.CharField(source="category.name", read_only=True)
@@ -34,6 +33,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "due_date",
+            "completed_at",
             "user",
             "priority",
             "status",
@@ -44,7 +44,13 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "user",
+            "completed_at",
+            "created_at",
+            "updated_at",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,7 +69,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
             for field in attrs:
                 if field not in allowed_fields:
-                    raise serializers.ValidationError({field: f"{field} cannot be updated for completed tasks."})
-                
+                    raise serializers.ValidationError(
+                        {field: f"{field} cannot be updated for completed tasks."}
+                    )
+
         return attrs
-    
