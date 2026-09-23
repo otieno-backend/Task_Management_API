@@ -65,7 +65,7 @@ class TaskSerializer(serializers.ModelSerializer):
         instance = getattr(self, "instance", None)
 
         if instance and instance.status == Task.Status.COMPLETED:
-            allowed_fields = {"title"}
+            allowed_fields = {"title", "status"}
 
             for field in attrs:
                 if field not in allowed_fields:

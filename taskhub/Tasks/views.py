@@ -125,6 +125,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
 
