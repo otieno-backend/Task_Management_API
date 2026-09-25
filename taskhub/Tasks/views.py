@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from django.core.cache import cache
 
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -59,8 +60,40 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         return {"request": self.request}
 
+    def list(self, request, *args, **kwargs):
+        query_string = request.META.get("QUERY_STRING", "")
+        cache_version = self.get_cache_version()
+        cache_key = f"tasks_user_{request.user.id}_v{cache_version}_{query_string}"
+
+        cached_response = cache.get(cache_key)
+
+        if cached_response is not None:
+            return Response(cached_response)
+
+        response = super().list(request, *args, **kwargs)
+
+        cache.set(cache_key, response.data, 60)
+
+        return response
+
+    def get_cache_version(self):
+        version_key = f"tasks_cache_version_{self.request.user.id}"
+        version = cache.get(version_key)
+
+        if version is None:
+            version = 1
+            cache.set(version_key, version, None)
+
+        return version
+
+    def invalidate_task_cache(self):
+        version_key = f"tasks_cache_version_{self.request.user.id}"
+        version = self.get_cache_version()
+        cache.set(version_key, version + 1, None)
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+        self.invalidate_task_cache()
 
     def perform_update(self, serializer):
         task = self.get_object()
@@ -77,6 +110,8 @@ class TaskViewSet(viewsets.ModelViewSet):
             if old_status == Task.Status.COMPLETED:
                 task.completed_at = None
                 task.save(update_fields=["completed_at"])
+
+        self.invalidate_task_cache()
 
     def get_next_due_date(self, task):
         if not task.due_date:
@@ -121,6 +156,8 @@ class TaskViewSet(viewsets.ModelViewSet):
                 category=task.category,
             )
 
+        self.invalidate_task_cache()
+
         return Response(self.get_serializer(task).data)
 
 
@@ -131,6 +168,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Category.objects.filter(user=self.request.user)
+
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
